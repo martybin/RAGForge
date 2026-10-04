@@ -4,7 +4,7 @@ import pytest
 
 from app.ingestion.indexer import run_ingestion
 from app.retrieval.vector_search import DenseRetriever
-from app.storage import IndexNotFoundError, open_collection
+from app.storage import IndexNotFoundError, open_vectorstore
 from tests.fakes import HashingEmbedder
 
 
@@ -12,7 +12,8 @@ def test_dense_retriever_finds_the_matching_chunk(kb_settings):
     embedder = HashingEmbedder()
     run_ingestion(kb_settings, embedder=embedder)
     retriever = DenseRetriever(
-        embedder, open_collection(kb_settings.chroma_dir, kb_settings.chroma_collection)
+        embedder,
+        open_vectorstore(kb_settings.chroma_dir, kb_settings.chroma_collection, HashingEmbedder()),
     )
 
     results = retriever.search("worker_init_fn generator reproducible workers", top_k=2)
@@ -27,4 +28,6 @@ def test_dense_retriever_finds_the_matching_chunk(kb_settings):
 
 def test_empty_collection_raises_index_not_found(kb_settings):
     with pytest.raises(IndexNotFoundError):
-        DenseRetriever(HashingEmbedder(), open_collection(kb_settings.chroma_dir, "empty"))
+        DenseRetriever(
+            HashingEmbedder(), open_vectorstore(kb_settings.chroma_dir, "empty", HashingEmbedder())
+        )

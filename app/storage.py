@@ -1,6 +1,6 @@
 """Persistence for the two index artifacts written at ingestion time.
 
-* A Chroma collection holding chunk embeddings, text and metadata (dense search).
+* A LangChain `Chroma` vector store (cosine space) for dense search.
 * A JSONL snapshot of all chunks, from which the in-memory BM25 index is rebuilt
   at startup (lexical search). JSONL keeps it human-inspectable and diffable.
 """
@@ -12,8 +12,9 @@ from collections.abc import Iterable
 from pathlib import Path
 
 import chromadb
-from chromadb.api.models.Collection import Collection
 from chromadb.config import Settings as ChromaSettings
+from langchain_chroma import Chroma
+from langchain_core.embeddings import Embeddings
 
 from app.models.schemas import Chunk
 
@@ -22,20 +23,21 @@ class IndexNotFoundError(RuntimeError):
     """Raised when the index has not been built yet (run scripts/ingest.py)."""
 
 
-def open_collection(chroma_dir: Path, name: str, *, reset: bool = False) -> Collection:
-    """Open (or create) the Chroma collection using cosine distance.
-
-    Embeddings are always computed by `app.embeddings.Embedder`, never by Chroma,
-    so the collection is created without an embedding function.
-    """
+def open_vectorstore(
+    chroma_dir: Path, name: str, embeddings: Embeddings, *, reset: bool = False
+) -> Chroma:
+    """Open (or create) the Chroma vector store using cosine distance."""
     chroma_dir.mkdir(parents=True, exist_ok=True)
     client = chromadb.PersistentClient(
         path=str(chroma_dir), settings=ChromaSettings(anonymized_telemetry=False)
     )
     if reset and name in {c.name for c in client.list_collections()}:
         client.delete_collection(name)
-    return client.get_or_create_collection(
-        name=name, metadata={"hnsw:space": "cosine"}, embedding_function=None
+    return Chroma(
+        client=client,
+        collection_name=name,
+        embedding_function=embeddings,
+        collection_metadata={"hnsw:space": "cosine"},
     )
 
 

@@ -8,7 +8,7 @@ headings, code and math intact:
 * ``{class}`~torch.utils.data.DataLoader``  ->  ```torch.utils.data.DataLoader```
 * ``{ref}`automatic batching <label>``      ->  ``automatic batching``
 * ``:func:`torch.foo``` (RST role)           ->  ```torch.foo```
-* ``(label)=`` anchor lines                  ->  removed
+* ``(label)=`` anchors and ``% comment`` lines ->  removed
 * ``{eval-rst}`` / ``{toctree}`` / ``{image}`` blocks -> removed (no prose)
 * ``{note}`` / ``{warning}`` admonitions     ->  "Note:" / "Warning:" + their content
 * ``{code-block} python`` / ``{math}``       ->  plain ``python`` / ``math`` code fences
@@ -32,6 +32,7 @@ _FENCE_RE = re.compile(r"^\s*(?P<fence>`{3,}|:{3,})\s*(?P<info>.*)$")
 _DIRECTIVE_RE = re.compile(r"^\{(?P<name>[\w:-]+)\}\s*(?P<arg>.*)$")
 _DIRECTIVE_OPTION_RE = re.compile(r"^\s*:[\w-]+:")
 _ANCHOR_RE = re.compile(r"^\s*\([^()\s]+\)=\s*$")
+_COMMENT_RE = re.compile(r"^\s*%")  # MyST comment line
 # MyST roles {role}`body` and RST roles :role:`body` / :py:func:`body` (bodies may wrap lines),
 # or an inline code span. Matching code spans too means a role-like `{__name__}` *inside*
 # code is consumed as code and left untouched instead of being mistaken for a role.
@@ -118,7 +119,7 @@ def clean_markdown(text: str) -> str:
 
         if in_code:
             emit_verbatim(line)  # never rewrite code or math
-        elif not _ANCHOR_RE.match(line):
+        elif not (_ANCHOR_RE.match(line) or _COMMENT_RE.match(line)):
             prose.append(line)
 
     flush_prose()

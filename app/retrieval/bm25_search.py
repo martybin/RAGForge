@@ -1,12 +1,12 @@
-"""Lexical retrieval with BM25 (Okapi).
+"""Lexical retrieval with LangChain's `BM25Retriever` (Okapi BM25).
 
 Dense embeddings are good at paraphrase but weak at exact identifiers such as
 ``pin_memory``, ``worker_init_fn`` or ``CUBLAS_WORKSPACE_CONFIG``, which is
 exactly what users of technical documentation type. BM25 covers that gap.
 
-The tokenizer is tailored to code-heavy text: identifiers are kept whole *and*
-split into their parts, so ``num_workers`` matches both the exact identifier
-(high IDF, very precise) and prose mentioning "workers".
+The tokenizer (passed as ``preprocess_func``) is tailored to code-heavy text:
+identifiers are kept whole *and* split into their parts, so ``num_workers``
+matches both the exact identifier (high IDF) and prose mentioning "workers".
 """
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ import re
 from collections.abc import Iterable, Sequence
 
 import numpy as np
-from rank_bm25 import BM25Okapi
+from langchain_community.retrievers import BM25Retriever as LCBM25Retriever
 
 from app.models.schemas import Chunk, RetrievalMethod, RetrievedChunk
 
@@ -51,7 +51,12 @@ class BM25Retriever:
             raise ValueError("BM25Retriever needs at least one chunk")
         self._chunks = list(chunks)
         self._position = {chunk.chunk_id: i for i, chunk in enumerate(self._chunks)}
-        self._index = BM25Okapi([tokenize(c.content) for c in self._chunks], k1=k1, b=b)
+        # LangChain builds the rank_bm25 index; `.vectorizer` exposes it so we can read scores.
+        self._retriever = LCBM25Retriever.from_documents(
+            [chunk.to_document() for chunk in self._chunks],
+            bm25_params={"k1": k1, "b": b},
+            preprocess_func=tokenize,
+        )
 
     def __len__(self) -> int:
         return len(self._chunks)
@@ -85,7 +90,7 @@ class BM25Retriever:
         }
 
     def _scores(self, query: str) -> np.ndarray:
-        terms = tokenize(query)
+        terms = self._retriever.preprocess_func(query)
         if not terms:
             return np.zeros(len(self._chunks))
-        return np.asarray(self._index.get_scores(terms), dtype=float)
+        return np.asarray(self._retriever.vectorizer.get_scores(terms), dtype=float)

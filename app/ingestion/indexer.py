@@ -14,7 +14,7 @@ from app.embeddings import Embedder
 from app.ingestion.chunker import MarkdownChunker
 from app.ingestion.loaders import load_documents
 from app.models.schemas import Chunk
-from app.storage import open_collection, save_chunks
+from app.storage import open_vectorstore, save_chunks
 
 logger = logging.getLogger(__name__)
 
@@ -43,26 +43,19 @@ def index_chunks(chunks: Sequence[Chunk], embedder: Embedder, settings: Settings
     if len(set(ids)) != len(ids):
         raise ValueError("Duplicate chunk ids; chunk ids must be unique")
 
-    collection = open_collection(settings.chroma_dir, settings.chroma_collection, reset=True)
+    store = open_vectorstore(settings.chroma_dir, settings.chroma_collection, embedder, reset=True)
     started = time.perf_counter()
-    embeddings = embedder.embed_documents([c.content for c in chunks], show_progress=True)
+    for start in range(0, len(chunks), _CHROMA_BATCH):
+        batch = chunks[start : start + _CHROMA_BATCH]
+        store.add_documents([c.to_document() for c in batch], ids=[c.chunk_id for c in batch])
     logger.info(
         "chunks_embedded",
         extra={"count": len(chunks), "embed_ms": round((time.perf_counter() - started) * 1000)},
     )
-
-    for start in range(0, len(chunks), _CHROMA_BATCH):
-        batch = chunks[start : start + _CHROMA_BATCH]
-        collection.add(
-            ids=[c.chunk_id for c in batch],
-            embeddings=embeddings[start : start + _CHROMA_BATCH].tolist(),
-            documents=[c.content for c in batch],
-            metadatas=[c.metadata.to_chroma() for c in batch],
-        )
     save_chunks(chunks, settings.chunks_path)
     logger.info(
         "index_built",
-        extra={"vectors": collection.count(), "snapshot": str(settings.chunks_path)},
+        extra={"vectors": store._collection.count(), "snapshot": str(settings.chunks_path)},
     )
 
 

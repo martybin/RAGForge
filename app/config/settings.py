@@ -48,6 +48,10 @@ class Settings(BaseSettings):
         description="Ollama num_ctx. Its small default would silently truncate long RAG prompts.",
     )
     llm_timeout_seconds: float = Field(default=300.0, gt=0)
+    llm_think: bool | None = Field(
+        default=None,
+        description="Disable/enable reasoning for models like qwen3; unset = model default.",
+    )
 
     # --- Embedding / reranking models ---------------------------------------
     embedding_model: str = "BAAI/bge-small-en-v1.5"

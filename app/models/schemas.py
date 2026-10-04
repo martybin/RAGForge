@@ -11,6 +11,7 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import Literal
 
+from langchain_core.documents import Document as LCDocument
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
 
 
@@ -50,6 +51,18 @@ class Chunk(BaseModel):
     @property
     def chunk_id(self) -> str:
         return self.metadata.chunk_id
+
+    def to_document(self) -> LCDocument:
+        """LangChain `Document` (text + scalar metadata) for vector stores and retrievers."""
+        return LCDocument(
+            id=self.chunk_id, page_content=self.content, metadata=self.metadata.to_chroma()
+        )
+
+    @classmethod
+    def from_document(cls, document: LCDocument) -> Chunk:
+        return cls(
+            content=document.page_content, metadata=ChunkMetadata.model_validate(document.metadata)
+        )
 
 
 class RetrievalMethod(StrEnum):

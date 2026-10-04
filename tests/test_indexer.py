@@ -3,17 +3,19 @@
 import pytest
 
 from app.ingestion.indexer import index_chunks, run_ingestion
-from app.storage import IndexNotFoundError, load_chunks, open_collection
+from app.storage import IndexNotFoundError, load_chunks, open_vectorstore
 from tests.fakes import HashingEmbedder
 
 
 def test_ingestion_builds_consistent_vector_index_and_snapshot(kb_settings):
     report = run_ingestion(kb_settings, embedder=HashingEmbedder())
     chunks = load_chunks(kb_settings.chunks_path)
-    collection = open_collection(kb_settings.chroma_dir, kb_settings.chroma_collection)
+    collection = open_vectorstore(
+        kb_settings.chroma_dir, kb_settings.chroma_collection, HashingEmbedder()
+    )
 
     assert report.documents == 2
-    assert report.chunks == len(chunks) == collection.count() == 3
+    assert report.chunks == len(chunks) == collection._collection.count() == 3
     stored = collection.get(ids=[chunks[0].chunk_id], include=["metadatas", "documents"])
     assert stored["documents"][0] == chunks[0].content
     assert stored["metadatas"][0]["section"] == chunks[0].metadata.section
@@ -24,7 +26,12 @@ def test_ingestion_builds_consistent_vector_index_and_snapshot(kb_settings):
 def test_reingestion_replaces_the_index_instead_of_appending(kb_settings):
     run_ingestion(kb_settings, embedder=HashingEmbedder())
     run_ingestion(kb_settings, embedder=HashingEmbedder())
-    assert open_collection(kb_settings.chroma_dir, kb_settings.chroma_collection).count() == 3
+    assert (
+        open_vectorstore(
+            kb_settings.chroma_dir, kb_settings.chroma_collection, HashingEmbedder()
+        )._collection.count()
+        == 3
+    )
 
 
 def test_missing_snapshot_raises_a_clear_error(kb_settings):
