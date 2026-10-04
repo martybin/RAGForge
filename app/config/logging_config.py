@@ -39,7 +39,8 @@ class TextFormatter(logging.Formatter):
     """Human-friendly format that still shows ``extra`` fields as key=value."""
 
     def format(self, record: logging.LogRecord) -> str:
-        base = f"{self.formatTime(record, '%H:%M:%S')} {record.levelname:<7} {record.name}: {record.getMessage()}"
+        time = self.formatTime(record, "%H:%M:%S")
+        base = f"{time} {record.levelname:<7} {record.name}: {record.getMessage()}"
         extras = " ".join(f"{k}={v}" for k, v in _extra_fields(record).items())
         line = f"{base} {extras}".rstrip()
         if record.exc_info:

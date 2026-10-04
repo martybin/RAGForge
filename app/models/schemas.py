@@ -69,7 +69,7 @@ class RetrievedChunk(BaseModel):
     rank: int = Field(ge=1, description="1-based rank within the stage's result list.")
     component_scores: dict[str, float] = Field(
         default_factory=dict,
-        description="Scores from earlier stages, e.g. normalized dense/BM25 scores behind a hybrid score.",
+        description="Scores from earlier stages, e.g. the dense/BM25 scores behind a hybrid score.",
     )
 
     @computed_field
