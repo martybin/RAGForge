@@ -114,3 +114,8 @@ def test_role_like_text_inside_inline_code_is_not_a_role():
     assert clean_inline(source) == (
         "form `{__module__}.{__name__}`. Allowlist via `torch.add_safe_globals`."
     )
+
+
+def test_myst_comment_lines_are_removed_but_percent_in_prose_is_kept():
+    source = "% internal note for doc builders\nUses 50% less memory.\n"
+    assert clean_markdown(source) == "Uses 50% less memory.\n"
