@@ -1,0 +1,42 @@
+# Ollama is NOT part of this stack: run it on the host (https://ollama.com) and
+# `ollama pull <LLM_MODEL>`. The containers reach it via host.docker.internal.
+#
+#   docker compose run --rm ingest     # download docs + build the index (once)
+#   docker compose up api ui           # API on :8000, UI on :8501
+
+x-app: &app
+  build: .
+  env_file:
+    - path: .env
+      required: false
+  environment:
+    OLLAMA_BASE_URL: http://host.docker.internal:11434
+    RAW_DATA_DIR: /data/raw
+    PROCESSED_DATA_DIR: /data/processed
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+  volumes:
+    - ragforge-data:/data
+    - hf-cache:/models
+
+services:
+  ingest:
+    <<: *app
+    profiles: [tools]
+    command: sh -c "python scripts/download_docs.py && python scripts/ingest.py"
+
+  api:
+    <<: *app
+    ports: ["8000:8000"]
+
+  ui:
+    <<: *app
+    environment:
+      API_URL: http://api:8000
+    command: streamlit run ui/streamlit_app.py --server.port 8501 --server.address 0.0.0.0
+    ports: ["8501:8501"]
+    depends_on: [api]
+
+volumes:
+  ragforge-data:
+  hf-cache:
