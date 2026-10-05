@@ -29,3 +29,4 @@ data/processed/*
 .idea/
 .DS_Store
 Thumbs.db
+evaluation/results/checkpoints/

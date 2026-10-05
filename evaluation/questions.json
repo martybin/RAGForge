@@ -1,0 +1,352 @@
+[
+  {
+    "id": "q01",
+    "question": "What two methods does a map-style dataset need to implement?",
+    "expected_answer": "A map-style dataset implements the __getitem__ and __len__ protocols and represents a map from (possibly non-integral) indices or keys to data samples.",
+    "relevant_sources": ["pytorch/data.md"],
+    "answerable": true
+  },
+  {
+    "id": "q02",
+    "question": "Why can an IterableDataset produce duplicated samples when the DataLoader uses several workers?",
+    "expected_answer": "With multi-process data loading the same IterableDataset object is replicated on each worker process, so the replicas must be configured differently to avoid duplicated data.",
+    "relevant_sources": ["pytorch/data.md"],
+    "answerable": true
+  },
+  {
+    "id": "q03",
+    "question": "How do I turn off automatic batching in a DataLoader?",
+    "expected_answer": "Set both batch_size and batch_sampler to None (batch_sampler already defaults to None). Each sample from the dataset is then processed individually by the collate_fn.",
+    "relevant_sources": ["pytorch/data.md"],
+    "answerable": true
+  },
+  {
+    "id": "q04",
+    "question": "How do I get the DataLoader to return batches in pinned memory, and what if my batch is a custom class?",
+    "expected_answer": "Pass pin_memory=True to the DataLoader. The default pinning logic only recognizes tensors and maps/iterables of tensors, so for a custom batch type you must define a pin_memory() method on that type; otherwise the batch is returned without pinning.",
+    "relevant_sources": ["pytorch/data.md"],
+    "answerable": true
+  },
+  {
+    "id": "q05",
+    "question": "How do I seed the random number generator for both CPU and CUDA devices?",
+    "expected_answer": "Call torch.manual_seed(), for example torch.manual_seed(0), which seeds the RNG for all devices (both CPU and CUDA).",
+    "relevant_sources": ["pytorch/notes/randomness.md"],
+    "answerable": true
+  },
+  {
+    "id": "q06",
+    "question": "Why can cuDNN convolutions select different algorithms between runs, and how do I make the choice deterministic?",
+    "expected_answer": "With benchmarking enabled, cuDNN benchmarks several convolution algorithms for each new set of size parameters and benchmarking noise can lead to different choices on different runs. Setting torch.backends.cudnn.benchmark = False makes cuDNN select an algorithm deterministically, possibly at the cost of performance.",
+    "relevant_sources": ["pytorch/notes/randomness.md"],
+    "answerable": true
+  },
+  {
+    "id": "q07",
+    "question": "How can I make PyTorch raise an error when an operation has no deterministic implementation?",
+    "expected_answer": "Call torch.use_deterministic_algorithms(True). PyTorch then uses deterministic algorithms where available and throws an error for operations known to be nondeterministic without a deterministic alternative, such as the CUDA implementation of index_add_.",
+    "relevant_sources": ["pytorch/notes/randomness.md"],
+    "answerable": true
+  },
+  {
+    "id": "q08",
+    "question": "How should I configure a DataLoader so that its worker processes are reproducible?",
+    "expected_answer": "Pass a worker_init_fn that seeds numpy and random with torch.initial_seed() % 2**32, and pass a torch.Generator seeded with manual_seed(0) as the DataLoader's generator argument.",
+    "relevant_sources": ["pytorch/notes/randomness.md"],
+    "answerable": true
+  },
+  {
+    "id": "q09",
+    "question": "My data loader workers all return identical random numbers. What is going on?",
+    "expected_answer": "You are likely using other libraries to generate random numbers in the dataset while worker subprocesses are started via fork, so they share the same random state. Set up random seeds in each worker with the DataLoader's worker_init_fn option.",
+    "relevant_sources": ["pytorch/notes/faq.md"],
+    "answerable": true
+  },
+  {
+    "id": "q10",
+    "question": "My out-of-memory recovery code inside an except block cannot allocate memory either. Why?",
+    "expected_answer": "The Python exception object holds a reference to the stack frame where the error was raised, which prevents the original tensors from being freed. Move the OOM recovery code outside of the except clause.",
+    "relevant_sources": ["pytorch/notes/faq.md"],
+    "answerable": true
+  },
+  {
+    "id": "q11",
+    "question": "How do I avoid size mismatches when using packed sequences in an RNN wrapped with DataParallel?",
+    "expected_answer": "pad_packed_sequence by default only pads up to the longest sequence it sees on each device, so outputs have different lengths when gathered. Pass the total_length argument (e.g. the padded input's max length) to pad_packed_sequence so every forward call returns sequences of the same length.",
+    "relevant_sources": ["pytorch/notes/faq.md"],
+    "answerable": true
+  },
+  {
+    "id": "q12",
+    "question": "What does the CUBLAS_WORKSPACE_CONFIG environment variable control?",
+    "expected_answer": "It specifies the cuBLAS workspace size per allocation using the format :[SIZE]:[COUNT]. The default is :4096:2:16:8 (2 * 4096 + 8 * 16 KiB), and setting :0:0 forces cuBLAS to avoid using workspaces.",
+    "relevant_sources": ["pytorch/notes/cuda.md"],
+    "answerable": true
+  },
+  {
+    "id": "q13",
+    "question": "Why does the stack trace of a CUDA error often point to the wrong place, and how can I debug it?",
+    "expected_answer": "GPU operations are asynchronous, so an error is only reported after the operation actually executes and the stack trace does not show where it was requested. Setting the environment variable CUDA_LAUNCH_BLOCKING=1 forces synchronous execution.",
+    "relevant_sources": ["pytorch/notes/cuda.md"],
+    "answerable": true
+  },
+  {
+    "id": "q14",
+    "question": "nvidia-smi still shows GPU memory as used after my tensors are freed. Why, and how do I release it?",
+    "expected_answer": "PyTorch uses a caching memory allocator, so unused memory it manages still appears as used in nvidia-smi. torch.cuda.empty_cache() releases unused cached memory so other GPU applications can use it, but memory occupied by live tensors is not freed. memory_allocated and memory_reserved can be used to monitor usage.",
+    "relevant_sources": ["pytorch/notes/cuda.md", "pytorch/notes/faq.md"],
+    "answerable": true
+  },
+  {
+    "id": "q15",
+    "question": "How can I overlap host-to-GPU data transfers with computation?",
+    "expected_answer": "Copy from pinned (page-locked) memory, e.g. with Tensor.pin_memory(), and pass non_blocking=True to .to() or .cuda() to make the GPU copy asynchronous. The DataLoader can return pinned batches with pin_memory=True.",
+    "relevant_sources": ["pytorch/notes/cuda.md"],
+    "answerable": true
+  },
+  {
+    "id": "q16",
+    "question": "What is the main benefit of CUDA Graphs and when should I try them?",
+    "expected_answer": "Replaying a CUDA graph greatly reduces CPU overhead because it skips argument setup and kernel dispatch and submits the whole graph with a single cudaGraphLaunch call. Try them if the network is graph-safe (usually static shapes and control flow) and its runtime is at least somewhat CPU-limited.",
+    "relevant_sources": ["pytorch/notes/cuda.md"],
+    "answerable": true
+  },
+  {
+    "id": "q17",
+    "question": "How do I change the capacity of the cuFFT plan cache?",
+    "expected_answer": "Set torch.backends.cuda.cufft_plan_cache.max_size, which gives the cache capacity (default 4096 on CUDA 10 and newer, 1023 on older versions); torch.backends.cuda.cufft_plan_cache.size gives the number of cached plans.",
+    "relevant_sources": ["pytorch/notes/cuda.md"],
+    "answerable": true
+  },
+  {
+    "id": "q18",
+    "question": "Which environment variable configures the CUDA caching allocator, and how do I disable caching to debug memory errors?",
+    "expected_answer": "The caching allocator is configured with PYTORCH_ALLOC_CONF (PYTORCH_CUDA_ALLOC_CONF is a backward-compatible alias) in the format option:value,option2:value2. Setting PYTORCH_NO_CUDA_MEMORY_CACHING=1 disables caching, e.g. to debug with cuda-memcheck.",
+    "relevant_sources": ["pytorch/notes/cuda.md"],
+    "answerable": true
+  },
+  {
+    "id": "q19",
+    "question": "What is the difference between no-grad mode and inference mode?",
+    "expected_answer": "In both modes computations are not recorded in the backward graph. Inference mode is the extreme version of no-grad mode that allows more speedups, but tensors created in inference mode cannot be used later in computations recorded by autograd.",
+    "relevant_sources": ["pytorch/notes/autograd.md"],
+    "answerable": true
+  },
+  {
+    "id": "q20",
+    "question": "Does calling model.eval() disable gradient computation?",
+    "expected_answer": "No. Evaluation mode is not a mechanism to disable gradient computation; it is orthogonal to no-grad and inference mode and only affects modules with training-specific behavior such as Dropout and BatchNorm.",
+    "relevant_sources": ["pytorch/notes/autograd.md"],
+    "answerable": true
+  },
+  {
+    "id": "q21",
+    "question": "How does autograd detect that a tensor saved for backward was modified in place?",
+    "expected_answer": "Every tensor keeps a version counter that is incremented whenever it is marked dirty. When a Function saves tensors for backward their version is saved too, and accessing saved_tensors raises an error if the current version is greater than the saved one.",
+    "relevant_sources": ["pytorch/notes/autograd.md"],
+    "answerable": true
+  },
+  {
+    "id": "q22",
+    "question": "How do I clip gradients when training with GradScaler?",
+    "expected_answer": "Call scaler.unscale_(optimizer) before clipping so the gradients are unscaled, clip them as usual (e.g. torch.nn.utils.clip_grad_norm_), then call scaler.step(optimizer) and scaler.update(). unscale_ should be called only once per optimizer per step.",
+    "relevant_sources": ["pytorch/notes/amp_examples.md"],
+    "answerable": true
+  },
+  {
+    "id": "q23",
+    "question": "How should gradient scaling be handled together with gradient accumulation?",
+    "expected_answer": "Gradients should stay scaled and the scale factor constant while an effective batch is accumulated; inf/NaN checks, step skipping and scale updates happen at effective-batch granularity, so scaler.step and scaler.update (and any unscale_) are called only every iters_to_accumulate iterations.",
+    "relevant_sources": ["pytorch/notes/amp_examples.md"],
+    "answerable": true
+  },
+  {
+    "id": "q24",
+    "question": "Why is gradient scaling needed when training with float16?",
+    "expected_answer": "Small gradient values may not be representable in float16 and flush to zero (underflow), losing parameter updates. Gradient scaling multiplies the loss by a scale factor so gradients have larger magnitudes, and gradients are unscaled before the optimizer step.",
+    "relevant_sources": ["pytorch/amp.md"],
+    "answerable": true
+  },
+  {
+    "id": "q25",
+    "question": "Why does BCELoss raise an error inside an autocast region, and what should I use instead?",
+    "expected_answer": "The backward of binary_cross_entropy/BCELoss can produce gradients that are not representable in float16, so they raise an error in autocast-enabled regions. Use binary_cross_entropy_with_logits or BCEWithLogitsLoss, which combine the sigmoid with the loss and are safe to autocast.",
+    "relevant_sources": ["pytorch/amp.md"],
+    "answerable": true
+  },
+  {
+    "id": "q26",
+    "question": "How do I use a different learning rate for one part of my model?",
+    "expected_answer": "Pass the optimizer an iterable of dicts (parameter groups), each with a params key and optional options such as lr. Keyword arguments given to the optimizer act as defaults for groups that do not override them.",
+    "relevant_sources": ["pytorch/optim.md"],
+    "answerable": true
+  },
+  {
+    "id": "q27",
+    "question": "Should scheduler.step() be called before or after optimizer.step()?",
+    "expected_answer": "After. Since PyTorch 1.1.0 the learning rate scheduler should be applied after the optimizer's update; calling scheduler.step() before optimizer.step() skips the first value of the learning rate schedule.",
+    "relevant_sources": ["pytorch/optim.md"],
+    "answerable": true
+  },
+  {
+    "id": "q28",
+    "question": "Which optimizers need a closure passed to optimizer.step(), and what should the closure do?",
+    "expected_answer": "Algorithms such as Conjugate Gradient and LBFGS that reevaluate the function multiple times. The closure should clear the gradients, compute the loss, call backward and return the loss.",
+    "relevant_sources": ["pytorch/optim.md"],
+    "answerable": true
+  },
+  {
+    "id": "q29",
+    "question": "How do I maintain an exponential moving average (EMA) of model weights with torch.optim.swa_utils?",
+    "expected_answer": "Create AveragedModel(model, multi_avg_fn=get_ema_multi_avg_fn(decay)) (decay defaults to 0.999 and should be close to 1) and call averaged_model.update_parameters(model) after each optimizer.step().",
+    "relevant_sources": ["pytorch/optim.md"],
+    "answerable": true
+  },
+  {
+    "id": "q30",
+    "question": "Should I save the whole module or only its state dict?",
+    "expected_answer": "For compatibility it is recommended to save only the module's state_dict (its parameters and persistent buffers) with torch.save, and restore it with torch.load followed by load_state_dict.",
+    "relevant_sources": ["pytorch/notes/serialization.md", "pytorch/notes/modules.md"],
+    "answerable": true
+  },
+  {
+    "id": "q31",
+    "question": "Why is the file large when I save a small slice of a big tensor with torch.save?",
+    "expected_answer": "torch.save preserves view relationships by saving the underlying storage, so the whole storage shared with the large tensor is written. Clone the slice before saving to store only its values (at the cost of losing view relationships).",
+    "relevant_sources": ["pytorch/notes/serialization.md"],
+    "answerable": true
+  },
+  {
+    "id": "q32",
+    "question": "What does weights_only=True in torch.load protect against, and what are its limitations?",
+    "expected_answer": "It restricts the unpickler to the functions and classes needed for state dicts of plain tensors and some primitive types, and forbids dynamic imports, narrowing the surface for remote code execution. It does not guard against denial of service attacks, and memory corruption may still be possible.",
+    "relevant_sources": ["pytorch/notes/serialization.md"],
+    "answerable": true
+  },
+  {
+    "id": "q33",
+    "question": "Which multiprocessing start method is required to use CUDA in subprocesses?",
+    "expected_answer": "The spawn or forkserver start method; with fork the CUDA runtime suffers from the poison-fork limitation. The start method can be set with multiprocessing.get_context(...) or multiprocessing.set_start_method(...).",
+    "relevant_sources": ["pytorch/notes/multiprocessing.md"],
+    "answerable": true
+  },
+  {
+    "id": "q34",
+    "question": "How many threads should each worker process use to avoid CPU oversubscription?",
+    "expected_answer": "Set the threads per process with torch.set_num_threads to at most floor(N/M), where N is the number of vCPUs and M the number of processes.",
+    "relevant_sources": ["pytorch/notes/multiprocessing.md"],
+    "answerable": true
+  },
+  {
+    "id": "q35",
+    "question": "When are two tensors broadcastable?",
+    "expected_answer": "Iterating over the dimension sizes starting at the trailing dimension, each pair of sizes must be equal, or one of them is 1, or one of them does not exist.",
+    "relevant_sources": ["pytorch/notes/broadcasting.md"],
+    "answerable": true
+  },
+  {
+    "id": "q36",
+    "question": "Does modifying a view tensor change the original tensor?",
+    "expected_answer": "Yes. A view shares the same underlying data with its base tensor, so editing the view is reflected in the base; creating a view does not copy data. Views can be non-contiguous, and .contiguous() copies the data when needed.",
+    "relevant_sources": ["pytorch/tensor_view.md"],
+    "answerable": true
+  },
+  {
+    "id": "q37",
+    "question": "How do I keep non-learnable state such as a running mean in a module's state_dict?",
+    "expected_answer": "Register it as a buffer with register_buffer. Persistent buffers are included in the state_dict (serialized), while non-persistent buffers are left out.",
+    "relevant_sources": ["pytorch/notes/modules.md"],
+    "answerable": true
+  },
+  {
+    "id": "q38",
+    "question": "Where does torch.hub store downloaded models?",
+    "expected_answer": "The locations are used in this order: the directory set with hub.set_dir(), $TORCH_HOME/hub if TORCH_HOME is set, $XDG_CACHE_HOME/torch/hub if XDG_CACHE_HOME is set, and otherwise ~/.cache/torch/hub.",
+    "relevant_sources": ["pytorch/hub.md"],
+    "answerable": true
+  },
+  {
+    "id": "q39",
+    "question": "Why does activation checkpointing stash the RNG state, and how can I skip that overhead?",
+    "expected_answer": "Checkpointing reruns forward segments during backward, so it stashes and restores the RNG state to give the same output as non-checkpointed passes (e.g. with dropout). If that determinism is not needed, pass preserve_rng_state=False to checkpoint or checkpoint_sequential.",
+    "relevant_sources": ["pytorch/checkpoint.md"],
+    "answerable": true
+  },
+  {
+    "id": "q40",
+    "question": "How do I turn a real tensor of shape (..., 2) into a complex tensor without copying?",
+    "expected_answer": "Use torch.view_as_complex (and torch.view_as_real to go back); these functions do not copy and return a view of the input tensor.",
+    "relevant_sources": ["pytorch/complex_numbers.md"],
+    "answerable": true
+  },
+  {
+    "id": "q41",
+    "question": "How does DistributedDataParallel organize gradients to communicate efficiently?",
+    "expected_answer": "Each process's Reducer groups parameter gradients into buckets (size set with bucket_cap_mb) and reduces one bucket at a time; parameters are assigned to buckets roughly in reverse order of model.parameters() because gradients become ready in about that order during backward.",
+    "relevant_sources": ["pytorch/notes/ddp.md"],
+    "answerable": true
+  },
+  {
+    "id": "q42",
+    "question": "How do I capture and save a CUDA memory snapshot for visualization?",
+    "expected_answer": "Enable memory history with torch.cuda.memory._record_memory_history(), run the code to observe, then save the pickled snapshot with torch.cuda.memory._dump_snapshot('my_snapshot.pickle').",
+    "relevant_sources": ["pytorch/torch_cuda_memory.md"],
+    "answerable": true
+  },
+  {
+    "id": "u01",
+    "question": "How do I export a trained PyTorch model to ONNX?",
+    "expected_answer": "I couldn't find enough evidence in the knowledge base to answer this reliably.",
+    "relevant_sources": [],
+    "answerable": false
+  },
+  {
+    "id": "u02",
+    "question": "How do I write a custom Triton kernel and call it from PyTorch?",
+    "expected_answer": "I couldn't find enough evidence in the knowledge base to answer this reliably.",
+    "relevant_sources": [],
+    "answerable": false
+  },
+  {
+    "id": "u03",
+    "question": "How do I shard a large model across GPUs with FullyShardedDataParallel (FSDP)?",
+    "expected_answer": "I couldn't find enough evidence in the knowledge base to answer this reliably.",
+    "relevant_sources": [],
+    "answerable": false
+  },
+  {
+    "id": "u04",
+    "question": "How do I fine-tune a language model with LoRA adapters?",
+    "expected_answer": "I couldn't find enough evidence in the knowledge base to answer this reliably.",
+    "relevant_sources": [],
+    "answerable": false
+  },
+  {
+    "id": "u05",
+    "question": "What is the pip command to install PyTorch with CUDA 12 support on Windows?",
+    "expected_answer": "I couldn't find enough evidence in the knowledge base to answer this reliably.",
+    "relevant_sources": [],
+    "answerable": false
+  },
+  {
+    "id": "u06",
+    "question": "How do I convert a Keras model into a PyTorch nn.Module?",
+    "expected_answer": "I couldn't find enough evidence in the knowledge base to answer this reliably.",
+    "relevant_sources": [],
+    "answerable": false
+  },
+  {
+    "id": "u07",
+    "question": "How do I package a PyTorch inference service in a Docker container?",
+    "expected_answer": "I couldn't find enough evidence in the knowledge base to answer this reliably.",
+    "relevant_sources": [],
+    "answerable": false
+  },
+  {
+    "id": "u08",
+    "question": "What is the capital of France?",
+    "expected_answer": "I couldn't find enough evidence in the knowledge base to answer this reliably.",
+    "relevant_sources": [],
+    "answerable": false
+  }
+]

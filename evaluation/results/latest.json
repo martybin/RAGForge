@@ -1,0 +1,197 @@
+{
+  "meta": {
+    "created": "2026-10-04T09:03:28+00:00",
+    "git_commit": "a38d3e1",
+    "dataset": "evaluation/questions.json",
+    "questions": 2,
+    "config": {
+      "llm_provider": "ollama",
+      "llm_model": "qwen2.5:3b",
+      "embedding_model": "BAAI/bge-small-en-v1.5",
+      "reranker_model": "BAAI/bge-reranker-base",
+      "chunk_size": 400,
+      "chunk_overlap": 80,
+      "top_k_dense": 10,
+      "top_k_bm25": 10,
+      "top_k_hybrid": 20,
+      "top_k_reranked": 5,
+      "hybrid_alpha": 0.6,
+      "min_rerank_score": 0.05,
+      "max_context_tokens": 2000
+    },
+    "duration_s": 131.9
+  },
+  "retrieval": {
+    "summary": {
+      "answerable_questions": 2,
+      "unanswerable_questions": 0,
+      "stages": {
+        "dense": {
+          "recall@1": 1.0,
+          "recall@3": 1.0,
+          "recall@5": 1.0,
+          "mrr@5": 1.0
+        },
+        "bm25": {
+          "recall@1": 1.0,
+          "recall@3": 1.0,
+          "recall@5": 1.0,
+          "mrr@5": 1.0
+        },
+        "hybrid": {
+          "recall@1": 1.0,
+          "recall@3": 1.0,
+          "recall@5": 1.0,
+          "mrr@5": 1.0
+        },
+        "reranked": {
+          "recall@1": 1.0,
+          "recall@3": 1.0,
+          "recall@5": 1.0,
+          "mrr@5": 1.0
+        }
+      },
+      "context_relevance": 0.9,
+      "evidence_gate": {
+        "unanswerable_blocked_before_llm": null,
+        "answerable_blocked_before_llm": 0.0
+      },
+      "latency_ms": {
+        "retrieval_mean": 1973.25,
+        "rerank_mean": 29674.45
+      }
+    },
+    "records": [
+      {
+        "id": "q01",
+        "answerable": true,
+        "relevant_sources": [
+          "pytorch/data.md"
+        ],
+        "ranked_sources": {
+          "dense": [
+            "pytorch/data.md",
+            "pytorch/data.md",
+            "pytorch/data.md",
+            "pytorch/data.md",
+            "pytorch/data.md",
+            "pytorch/data.md",
+            "pytorch/data.md",
+            "pytorch/notes/faq.md",
+            "pytorch/optim.md",
+            "pytorch/notes/extending.md"
+          ],
+          "bm25": [
+            "pytorch/data.md",
+            "pytorch/data.md",
+            "pytorch/data.md",
+            "pytorch/data.md",
+            "pytorch/data.md",
+            "pytorch/data.md",
+            "pytorch/data.md",
+            "pytorch/notes/extending.md",
+            "pytorch/data.md",
+            "pytorch/data.md"
+          ],
+          "hybrid": [
+            "pytorch/data.md",
+            "pytorch/data.md",
+            "pytorch/data.md",
+            "pytorch/data.md",
+            "pytorch/data.md",
+            "pytorch/data.md",
+            "pytorch/data.md",
+            "pytorch/data.md",
+            "pytorch/notes/extending.md",
+            "pytorch/data.md",
+            "pytorch/notes/extending.md",
+            "pytorch/data.md",
+            "pytorch/notes/faq.md",
+            "pytorch/optim.md"
+          ],
+          "reranked": [
+            "pytorch/data.md",
+            "pytorch/data.md",
+            "pytorch/data.md",
+            "pytorch/data.md",
+            "pytorch/data.md"
+          ]
+        },
+        "context_sources": [
+          "pytorch/data.md",
+          "pytorch/data.md",
+          "pytorch/data.md",
+          "pytorch/data.md",
+          "pytorch/data.md"
+        ],
+        "top_rerank_score": 0.9664231538772583,
+        "retrieval_ms": 3397.5,
+        "rerank_ms": 44122.4
+      },
+      {
+        "id": "q02",
+        "answerable": true,
+        "relevant_sources": [
+          "pytorch/data.md"
+        ],
+        "ranked_sources": {
+          "dense": [
+            "pytorch/data.md",
+            "pytorch/data.md",
+            "pytorch/notes/faq.md",
+            "pytorch/data.md",
+            "pytorch/data.md",
+            "pytorch/notes/randomness.md",
+            "pytorch/data.md",
+            "pytorch/data.md",
+            "pytorch/data.md",
+            "pytorch/data.md"
+          ],
+          "bm25": [
+            "pytorch/data.md",
+            "pytorch/data.md",
+            "pytorch/data.md",
+            "pytorch/notes/randomness.md",
+            "pytorch/data.md",
+            "pytorch/notes/faq.md",
+            "pytorch/data.md",
+            "pytorch/data.md",
+            "pytorch/data.md",
+            "pytorch/data.md"
+          ],
+          "hybrid": [
+            "pytorch/data.md",
+            "pytorch/data.md",
+            "pytorch/notes/faq.md",
+            "pytorch/notes/randomness.md",
+            "pytorch/data.md",
+            "pytorch/data.md",
+            "pytorch/data.md",
+            "pytorch/data.md",
+            "pytorch/data.md",
+            "pytorch/data.md",
+            "pytorch/data.md",
+            "pytorch/data.md"
+          ],
+          "reranked": [
+            "pytorch/data.md",
+            "pytorch/data.md",
+            "pytorch/data.md",
+            "pytorch/data.md",
+            "pytorch/notes/randomness.md"
+          ]
+        },
+        "context_sources": [
+          "pytorch/data.md",
+          "pytorch/data.md",
+          "pytorch/data.md",
+          "pytorch/data.md",
+          "pytorch/notes/randomness.md"
+        ],
+        "top_rerank_score": 0.9154694676399231,
+        "retrieval_ms": 549.0,
+        "rerank_ms": 15226.5
+      }
+    ]
+  }
+}
