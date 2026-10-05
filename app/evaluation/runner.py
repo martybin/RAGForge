@@ -76,7 +76,7 @@ class CachedOutcome(RetrievalOutcome):
 def run_retrieval(
     pipeline: RAGPipeline, examples: Sequence[EvalExample], checkpoint: Path | None = None
 ) -> tuple[list[RetrievalRecord], dict[str, RetrievalOutcome]]:
-    """Retrieve for every example; with ``checkpoint`` an interrupted run resumes where it stopped."""
+    """Retrieve for every example; a checkpoint lets an interrupted run resume."""
     records, outcomes = [], {}
     cached = _load_checkpoint(checkpoint, CachedOutcome)
     for i, example in enumerate(examples, start=1):
